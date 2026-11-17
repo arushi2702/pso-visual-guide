@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Particle Swarm Optimization — An Interactive Visual Guide</title>
+  <meta name="description" content="An interactive, animated explanation of Particle Swarm Optimization (PSO): intuition, the velocity equation, the algorithm, a live playground, parameters, topologies and a quiz." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+
+  <!-- ============================ NAV ============================ -->
+  <nav class="nav" id="nav">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#8b7cff"/><stop offset="1" stop-color="#fb7185"/></linearGradient></defs>
+        <circle cx="16" cy="16" r="15" fill="none" stroke="url(#bg1)" stroke-width="1.5" opacity=".6"/>
+        <circle cx="16" cy="16" r="3.2" fill="#fb7185"/>
+        <circle cx="8" cy="10" r="2" fill="#22d3ee"/><circle cx="24" cy="9" r="2" fill="#8b7cff"/>
+        <circle cx="9" cy="23" r="2" fill="#fbbf24"/><circle cx="24" cy="23" r="2" fill="#34d399"/>
+      </svg>
+      PSO <small>Visual Guide</small>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="#problem"><span class="n">01</span>Problem</a>
+      <a href="#intuition"><span class="n">02</span>Intuition</a>
+      <a href="#anatomy"><span class="n">03</span>Equation</a>
+      <a href="#algorithm"><span class="n">04</span>Algorithm</a>
+      <a href="#playground"><span class="n">05</span>Playground</a>
+      <a href="#parameters"><span class="n">06</span>Parameters</a>
+      <a href="#topology"><span class="n">07</span>Topology</a>
+      <a href="#summary"><span class="n">08</span>Summary</a>
+      <a href="#quiz"><span class="n">09</span>Quiz</a>
+    </div>
+    <button class="btn btn-sm nav-toggle" id="navToggle" aria-label="Menu">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg> Sections
+    </button>
+  </nav>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero" id="top">
+    <canvas id="heroCanvas" aria-hidden="true"></canvas>
+    <div class="hero-vignette"></div>
+    <div class="hero-inner">
+      <div class="chips">
+        <span class="chip"><i style="--c:var(--in)"></i>Swarm Intelligence</span>
+        <span class="chip"><i style="--c:var(--cog)"></i>Kennedy &amp; Eberhart · 1995</span>
+        <span class="chip"><i style="--c:var(--soc)"></i>Gradient-free metaheuristic</span>
+      </div>
+      <h1 class="hero-title"><span class="line">Particle Swarm</span><span class="line grad-text">Optimization</span></h1>
+      <p class="hero-lead">How a crowd of simple agents — each with nothing but <b class="c-in">momentum</b>, a <b class="c-cog">memory</b> and <b class="c-soc">a leader to follow</b> — finds the best solution hidden in an enormous landscape. Every idea on this page is shown, not just told.</p>
+      <div class="hero-cta">
+        <a href="#problem" class="btn btn-primary btn-lg">Start the visual tour
+          <svg viewBox="0 0 24 24"><path d="M11 4h2v12l5.5-5.5 1.4 1.4L12 19.8l-7.9-7.9 1.4-1.4L11 16z"/></svg></a>
+        <a href="#playground" class="btn btn-ghost btn-lg">Jump to the playground</a>
+      </div>
+    </div>
+    <div class="hero-foot">
+      <div class="hero-hint"><span class="pulse-dot"></span>Move your cursor — the swarm is hunting it</div>
+      <div class="hero-stats">
+        <div><span id="hsN">0</span><small>particles</small></div>
+        <div><span id="hsIt">0</span><small>updates</small></div>
+        <div><span id="hsD">—</span><small>swarm best · px from target</small></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============================ 01 PROBLEM ============================ -->
+    <section class="section" id="problem">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">01 · The Problem</span>
+          <h2>Find the lowest point of a landscape <em>you cannot see</em></h2>
+          <p class="lead"><b>Optimization</b> means finding the input <code>x</code> that makes some function <code>f(x)</code> as small as possible — a cost, an error, a loss, a distance. Picture <code>f</code> as a landscape: the height at each point is how bad that solution is, and we want the deepest valley.</p>
+          <p class="lead">The catch: in real problems the landscape is invisible. We can only <b>probe</b> one point at a time and get back a single number. Try it below.</p>
+        </div>
+
+        <div class="panel pad reveal">
+          <div class="tabs" id="problemTabs">
+            <button class="tab active" data-mode="probe">① Probe blindly</button>
+            <button class="tab" data-mode="descent">② Roll downhill (gradient descent)</button>
+            <button class="tab" data-mode="swarm">③ Release a swarm</button>
+          </div>
+          <div class="cw r-wide"><canvas id="problemCanvas"></canvas>
+            <div class="hud tl"><div class="hud-card" id="problemHud">—</div></div>
+          </div>
+          <div class="caption-bar">
+            <div class="caption" id="problemCaption"></div>
+            <div class="caption-actions">
+              <label class="switch" style="--c:var(--accent)"><input type="checkbox" id="problemReveal"><span></span>Reveal landscape</label>
+              <button class="btn btn-sm" id="problemReset"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>Restart</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3 mt">
+          <div class="panel concept-card reveal d1" style="--c:var(--soc)">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 8c3 0 4 8 7 8s3-5 5-5 3 7 6 7"/></svg></div>
+            <h4>Local minimum</h4>
+            <p>A point lower than everything <em>immediately</em> around it — but not the lowest overall. A small dip on a mountainside. Simple downhill methods get trapped here.</p>
+          </div>
+          <div class="panel concept-card reveal d2" style="--c:var(--res)">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M2 6c4 0 5 13 10 13S18 6 22 6"/><circle cx="12" cy="19" r="1.5"/></svg></div>
+            <h4>Global minimum</h4>
+            <p>The lowest point of the <em>entire</em> landscape — the answer we actually want. On a "multimodal" landscape there are many local minima hiding it.</p>
+          </div>
+          <div class="panel concept-card reveal d3" style="--c:var(--in)">
+            <div class="ico"><svg viewBox="0 0 24 24"><circle cx="5" cy="8" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="9" r="2"/><circle cx="9" cy="16" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+            <h4>Why a swarm?</h4>
+            <p>Many searchers probing different places at once — and <em>sharing</em> what they find — are far less likely to get stuck in a dip than a single searcher. That is the core idea of PSO.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 02 INTUITION ============================ -->
+    <section class="section" id="intuition">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">02 · The Intuition</span>
+          <h2>A flock of birds <em>searching for food</em></h2>
+          <p class="lead">In 1995, social psychologist <b>James Kennedy</b> and electrical engineer <b>Russell Eberhart</b> were simulating how bird flocks move. They noticed their simulated flock was surprisingly good at <em>finding things</em>. Particle Swarm Optimization is that observation turned into an algorithm.</p>
+        </div>
+
+        <div class="split reveal">
+          <div class="panel pad">
+            <div class="cw r-16x10"><canvas id="birdCanvas"></canvas>
+              <div class="hud tl"><div class="hud-card" id="birdHud">Searching…</div></div>
+              <div class="canvas-hint">Click anywhere to move the food</div>
+            </div>
+            <div class="toggles">
+              <label class="switch" style="--c:var(--accent)"><input type="checkbox" id="birdSmell"><span></span>Show what the birds "smell" (fitness)</label>
+              <label class="switch" style="--c:var(--cog)"><input type="checkbox" id="birdMemory" checked><span></span>Personal memory (pbest)</label>
+              <label class="switch" style="--c:var(--soc)"><input type="checkbox" id="birdSocial" checked><span></span>Flock's best (gbest)</label>
+            </div>
+          </div>
+          <div>
+            <div class="insight">No bird knows where the food is. No bird can see the whole field. Each bird only knows <em>how strong the smell is right where it is</em>. Yet the flock finds the food — by every bird following three simple rules:</div>
+            <div class="rule" style="--c:var(--in)">
+              <div class="rule-num">1</div>
+              <div><h4>Keep flying the way you're going</h4>
+                <p>Birds have momentum. They don't stop and turn instantly; they carry on roughly in their current direction.</p>
+                <span class="tag">Inertia · w·v</span></div>
+            </div>
+            <div class="rule" style="--c:var(--cog)">
+              <div class="rule-num">2</div>
+              <div><h4>Remember your own best spot</h4>
+                <p>Each bird remembers where <em>it</em> smelled the food most strongly, and feels a pull back toward that place.</p>
+                <span class="tag">Cognitive · personal best (pbest)</span></div>
+            </div>
+            <div class="rule" style="--c:var(--soc)">
+              <div class="rule-num">3</div>
+              <div><h4>Follow the most successful bird</h4>
+                <p>Birds watch each other. Everyone feels a pull toward the best spot that <em>any</em> bird in the flock has found.</p>
+                <span class="tag">Social · global best (gbest)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel mapping reveal">
+          <div class="panel-title"><span><span class="dot"></span>Translating birds into mathematics</span></div>
+          <h3>Every piece of the story has a precise meaning</h3>
+          <div class="map-grid">
+            <div class="map-item"><span class="from">A bird</span><span class="to">Particle <i class="c-muted">i</i></span></div>
+            <div class="map-item"><span class="from">The flock</span><span class="to">Swarm (population)</span></div>
+            <div class="map-item"><span class="from">The field</span><span class="to">Search space (ℝⁿ)</span></div>
+            <div class="map-item"><span class="from">Bird's location</span><span class="to">Candidate solution xᵢ</span></div>
+            <div class="map-item" style="--c:var(--accent-2)"><span class="from">Smell strength</span><span class="to">Fitness f(xᵢ)</span></div>
+            <div class="map-item" style="--c:var(--in)"><span class="from">Speed &amp; direction</span><span class="to">Velocity vᵢ</span></div>
+            <div class="map-item" style="--c:var(--cog)"><span class="from">Its best remembered spot</span><span class="to">pbestᵢ</span></div>
+            <div class="map-item" style="--c:var(--soc)"><span class="from">Best spot known to the flock</span><span class="to">gbest</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 03 EQUATION ============================ -->
+    <section class="section" id="anatomy">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">03 · The Equation</span>
+          <h2>One equation drives <em>every single move</em></h2>
+          <p class="lead">Those three rules become three vectors. Each iteration, every particle adds them together to get its new velocity, then moves by that velocity. Hover over a term to see it in the diagram.</p>
+        </div>
+
+        <div class="panel eq-hero reveal">
+          <div class="eq" id="eqMain">
+            <span class="eq-lhs">v<sub>i</sub><sup>t+1</sup> =</span>
+            <span class="eq-term" data-term="in" style="--c:var(--in)"><span>w·v<sub>i</sub><sup>t</sup></span><span class="lbl">inertia</span></span>
+            <span class="eq-op">+</span>
+            <span class="eq-term" data-term="cog" style="--c:var(--cog)"><span>c<sub>1</sub>r<sub>1</sub>(pbest<sub>i</sub> − x<sub>i</sub><sup>t</sup>)</span><span class="lbl">cognitive</span></span>
+            <span class="eq-op">+</span>
+            <span class="eq-term" data-term="soc" style="--c:var(--soc)"><span>c<sub>2</sub>r<sub>2</sub>(gbest − x<sub>i</sub><sup>t</sup>)</span><span class="lbl">social</span></span>
+          </div>
+          <div></div>
+          <div class="eq small">
+            <span class="eq-lhs">x<sub>i</sub><sup>t+1</sup> = x<sub>i</sub><sup>t</sup> +</span>
+            <span class="eq-term" data-term="res" style="--c:var(--res)"><span>v<sub>i</sub><sup>t+1</sup></span><span class="lbl">move</span></span>
+          </div>
+        </div>
+
+        <div class="split reveal">
+          <div class="panel pad">
+            <div class="cw r-16x10"><canvas id="vecCanvas"></canvas>
+              <div class="hud tl"><div class="hud-card" id="vecStage">All forces shown</div></div>
+              <div class="canvas-hint">Drag the particle, pbest, gbest or the velocity tip</div>
+            </div>
+            <div class="btn-row mt" style="margin-top:14px">
+              <button class="btn btn-primary btn-sm" id="vecBuild"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>Build it step by step</button>
+              <button class="btn btn-sm" id="vecStep"><svg viewBox="0 0 24 24"><path d="M4 11h12.2l-5.6-5.6L12 4l8 8-8 8-1.4-1.4 5.6-5.6H4z"/></svg>Take the step</button>
+              <button class="btn btn-sm" id="vecRoll"><svg viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm2.5 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm9 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM12 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>Re-roll r₁, r₂</button>
+              <button class="btn btn-sm" id="vecReset"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>Reset</button>
+            </div>
+          </div>
+          <div class="vec-side">
+            <div class="panel pad">
+              <div class="panel-title"><span><span class="dot"></span>Coefficients</span></div>
+              <div class="slider" style="--c:var(--in)"><label><span class="sym">w</span> inertia weight</label><output id="vwO"></output><input type="range" id="vw" min="0" max="1.2" step="0.01" value="0.7"></div>
+              <div class="slider" style="--c:var(--cog)"><label><span class="sym">c₁</span> cognitive coefficient</label><output id="vc1O"></output><input type="range" id="vc1" min="0" max="3" step="0.01" value="1.5"></div>
+              <div class="slider" style="--c:var(--soc)"><label><span class="sym">c₂</span> social coefficient</label><output id="vc2O"></output><input type="range" id="vc2" min="0" max="3" step="0.01" value="1.5"></div>
+              <div class="slider" style="--c:var(--cog)"><label><span class="sym">r₁</span> random ∈ [0, 1]</label><output id="vr1O"></output><input type="range" id="vr1" min="0" max="1" step="0.01" value="0.6"></div>
+              <div class="slider" style="--c:var(--soc);margin-bottom:0"><label><span class="sym">r₂</span> random ∈ [0, 1]</label><output id="vr2O"></output><input type="range" id="vr2" min="0" max="1" step="0.01" value="0.45"></div>
+            </div>
+            <div class="panel pad">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--res)"></span>Live calculation</span></div>
+              <div class="calc" id="vecCalc"></div>
+              <p class="note" style="margin-top:10px">Most implementations draw r₁ and r₂ separately for each dimension, which also slightly bends the pull's direction. Here one value per term keeps the arrows easy to read.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="term-cards">
+          <div class="tcard reveal d1" style="--c:var(--in)"><div class="tcard-sym">w · v</div><h4>Inertia</h4><p>Keeps the particle moving in its current direction. Large <i>w</i> → long sweeping flights (<b>exploration</b>). Small <i>w</i> → quick braking (<b>exploitation</b>).</p></div>
+          <div class="tcard reveal d2" style="--c:var(--cog)"><div class="tcard-sym">c₁r₁(pbest − x)</div><h4>Cognitive · "nostalgia"</h4><p>A spring pulling the particle back toward the best place <em>it personally</em> has ever been. Makes each particle refine its own discoveries.</p></div>
+          <div class="tcard reveal d3" style="--c:var(--soc)"><div class="tcard-sym">c₂r₂(gbest − x)</div><h4>Social · "peer pressure"</h4><p>A spring pulling toward the best place found by <em>the whole swarm</em>. This is how one particle's discovery spreads to everyone.</p></div>
+          <div class="tcard reveal d4" style="--c:var(--accent)"><div class="tcard-sym">r₁, r₂ ~ U(0,1)</div><h4>Randomness</h4><p>Fresh random numbers every step make each pull a bit stronger or weaker. Particles don't fly rigid straight lines, so the swarm keeps <b>diversity</b>.</p></div>
+          <div class="tcard reveal d4" style="--c:var(--res)"><div class="tcard-sym">x ← x + v</div><h4>The move</h4><p>The three arrows are added tip-to-tail; their sum is the new velocity. The particle jumps by that vector. Repeat for every particle, every iteration.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 04 ALGORITHM ============================ -->
+    <section class="section" id="algorithm">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">04 · The Algorithm</span>
+          <h2>The loop that makes <em>the swarm think</em></h2>
+          <p class="lead">PSO is short enough to fit on an index card. Watch the glowing token travel through the flowchart; every box it visits lights up the matching line of pseudocode and explains what happens there. Click any box to jump to it.</p>
+        </div>
+        <div class="split even reveal">
+          <div class="panel flow-wrap">
+            <div class="panel-title"><span><span class="dot"></span>Flowchart</span>
+              <span style="display:flex;gap:8px;align-items:center"><span id="flowIter" class="mono" style="color:var(--text)">iteration 0</span>
+              <button class="btn btn-sm" id="flowToggle"><svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>Pause</button></span>
+            </div>
+            <svg id="flowSvg" viewBox="0 0 560 650" aria-label="PSO flowchart"></svg>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="panel flow-desc" id="flowDesc"></div>
+            <div class="panel">
+              <div class="panel-title" style="padding:16px 18px 0;margin:0"><span><span class="dot" style="--c:var(--in)"></span>Pseudocode</span><span class="mono" style="text-transform:none;letter-spacing:0">minimise f(x)</span></div>
+              <div class="code" id="flowCode">
+<span class="ln"><span class="kw">for each</span> particle i <span class="kw">in</span> swarm:</span>
+<span class="ln">    xᵢ ← <span class="fn">random</span> position in search space</span>
+<span class="ln">    vᵢ ← <span class="fn">random</span> small velocity</span>
+<span class="ln">    pbestᵢ ← xᵢ</span>
+<span class="ln"><span class="kw">repeat until</span> stopping criterion:</span>
+<span class="ln">    <span class="kw">for each</span> particle i: fᵢ ← <span class="fn">f</span>(xᵢ)       <span class="cm"># evaluate</span></span>
+<span class="ln">    <span class="kw">if</span> fᵢ &lt; <span class="fn">f</span>(pbestᵢ): pbestᵢ ← xᵢ   <span class="cm"># memory</span></span>
+<span class="ln">    gbest ← <span class="fn">argmin</span> f(pbestᵢ)          <span class="cm"># share</span></span>
+<span class="ln">    r₁, r₂ ← <span class="fn">U</span>(<span class="nm">0</span>, <span class="nm">1</span>)</span>
+<span class="ln">    vᵢ ← w·vᵢ + c₁r₁(pbestᵢ−xᵢ) + c₂r₂(gbest−xᵢ)</span>
+<span class="ln">    xᵢ ← xᵢ + vᵢ                      <span class="cm"># move</span></span>
+<span class="ln"><span class="kw">return</span> gbest</span>
+</div>
+            </div>
+            <div class="panel pad">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--cog)"></span>When do we stop?</span></div>
+              <div class="stop-list">
+                <div><b>Iteration budget</b>A fixed number of iterations (e.g. 1000) has run.</div>
+                <div><b>Good enough</b>f(gbest) has dropped below a target threshold.</div>
+                <div><b>Stagnation</b>gbest hasn't improved for k consecutive iterations.</div>
+                <div><b>Collapse</b>All particles are within a tiny radius — diversity ≈ 0.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 05 PLAYGROUND ============================ -->
+    <section class="section" id="playground">
+      <div class="container wide">
+        <div class="section-head reveal">
+          <span class="eyebrow">05 · Playground</span>
+          <h2>Watch a real swarm <em>solve real problems</em></h2>
+          <p class="lead">This is a full, live PSO running on classic benchmark functions. Darker colour = lower (better) value. Press <b>Play</b>, or use <b>Step phase</b> to walk through one iteration slowly. Change parameters <em>while it runs</em> and watch the behaviour change. Click a particle to inspect its forces; click empty space to drop a new particle.</p>
+        </div>
+
+        <div class="pg reveal">
+          <!-- Left: controls -->
+          <div class="pg-col pg-left">
+            <div class="panel ctl-group">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--accent-2)"></span>Objective function</span></div>
+              <div class="fn-grid" id="fnGrid"></div>
+              <div class="fn-info" id="fnInfo"></div>
+            </div>
+            <div class="panel ctl-group">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--cog)"></span>Behaviour presets</span></div>
+              <div class="preset-grid" id="presetGrid"></div>
+              <p class="preset-desc" id="presetDesc"></p>
+            </div>
+            <div class="panel ctl-group">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--in)"></span>Parameters</span><span class="mono" style="text-transform:none;letter-spacing:0;color:var(--dim)">live</span></div>
+              <div class="slider" style="--c:var(--in)"><label><span class="sym">w</span> inertia</label><output id="pwO"></output><input type="range" id="pw" min="0" max="1.2" step="0.01" value="0.729"></div>
+              <div class="slider" style="--c:var(--cog)"><label><span class="sym">c₁</span> cognitive</label><output id="pc1O"></output><input type="range" id="pc1" min="0" max="3" step="0.01" value="1.494"></div>
+              <div class="slider" style="--c:var(--soc)"><label><span class="sym">c₂</span> social</label><output id="pc2O"></output><input type="range" id="pc2" min="0" max="3" step="0.01" value="1.494"></div>
+              <div class="slider" style="--c:var(--res)"><label><span class="sym">v<sub>max</sub></span> speed limit (% of range)</label><output id="pvmO"></output><input type="range" id="pvm" min="0.02" max="0.5" step="0.01" value="0.2"></div>
+              <div class="slider" style="--c:var(--accent)"><label><span class="sym">N</span> swarm size</label><output id="pnO"></output><input type="range" id="pn" min="3" max="150" step="1" value="30"></div>
+              <div class="slider" style="--c:var(--accent-2)"><label><span class="sym">T</span> max iterations</label><output id="ptO"></output><input type="range" id="pt" min="20" max="500" step="10" value="150"></div>
+              <div class="slider" style="--c:#a78bfa"><label><span class="sym">⏱</span> animation speed (iter/s)</label><output id="psO"></output><input type="range" id="ps" min="0.5" max="40" step="0.5" value="4"></div>
+              <span class="ctl-sub">Inertia schedule</span>
+              <div class="seg full" id="inertiaSeg"><button data-v="constant" class="active">Constant w</button><button data-v="linear">Decay 0.9 → 0.4</button></div>
+              <span class="ctl-sub" style="margin-top:12px">Neighbourhood topology</span>
+              <div class="seg full" id="topoSeg"><button data-v="global" class="active">Global (gbest)</button><button data-v="ring">Ring (lbest)</button></div>
+            </div>
+            <div class="panel ctl-group">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--soc)"></span>Show on map</span></div>
+              <div class="disp-toggles">
+                <label class="switch" style="--c:var(--in)"><input type="checkbox" id="dTrails" checked><span></span>Motion trails</label>
+                <label class="switch" style="--c:var(--res)"><input type="checkbox" id="dVel"><span></span>Velocity arrows</label>
+                <label class="switch" style="--c:var(--cog)"><input type="checkbox" id="dPbest" checked><span></span>Personal bests (pbest) &amp; memory links</label>
+                <label class="switch" style="--c:var(--soc)"><input type="checkbox" id="dSocial"><span></span>Social links to gbest</label>
+                <label class="switch" style="--c:var(--accent-2)"><input type="checkbox" id="dOpt" checked><span></span>True global minimum</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Centre: stage -->
+          <div class="pg-col pg-center">
+            <div class="panel stage">
+              <div class="stage-bar">
+                <div class="btn-row">
+                  <button class="btn btn-primary btn-sm" id="pgPlay"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg><span>Play</span></button>
+                  <button class="btn btn-sm" id="pgStep" title="One full iteration (S)"><svg viewBox="0 0 24 24"><path d="M6 5v14l9-7zM16 5h3v14h-3z"/></svg>Step iteration</button>
+                  <button class="btn btn-sm" id="pgPhase" title="One phase of an iteration (P)"><svg viewBox="0 0 24 24"><path d="M4 6h10v2H4zm0 5h16v2H4zm0 5h7v2H4z"/></svg>Step phase</button>
+                  <button class="btn btn-sm" id="pgReset" title="Restart with the same initial swarm (R)"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>Reset</button>
+                  <button class="btn btn-sm" id="pgShuffle" title="New random initial swarm"><svg viewBox="0 0 24 24"><path d="M17 3l4 4-4 4V8h-2.6l-2.2 2.8-1.3-1.6L13.4 6H17zM3 6h4.6l8 10H17v-3l4 4-4 4v-3h-2.4l-8-10H3zm0 10h3.4l2.2-2.8 1.3 1.6L7.6 18H3z"/></svg>New swarm</button>
+                </div>
+                <div class="seg" id="viewSeg"><button data-v="2d" class="active">2D map</button><button data-v="3d">3D landscape</button></div>
+              </div>
+              <div class="cw r-sq" id="pgWrap">
+                <canvas id="pgCanvas"></canvas>
+                <canvas id="pg3d" style="display:none"></canvas>
+                <div class="hud tl"><div class="hud-card" id="pgHud"></div></div>
+                <div class="hud tr"><span class="phase-chip" id="pgPhaseChip"><i></i><span>ready</span></span></div>
+                <div class="hud bl"><div class="hud-card legend">
+                  <span><i style="--c:#e8f7ff"></i>particle</span>
+                  <span><i class="dia" style="--c:var(--cog)"></i>pbest</span>
+                  <span><i style="--c:var(--soc)"></i>gbest</span>
+                  <span><i class="line" style="--c:var(--accent-2)"></i>true min</span>
+                </div></div>
+                <div class="tooltip" id="pgTip"></div>
+              </div>
+              <div class="phase-banner" id="phaseBanner"></div>
+              <div class="shortcuts"><span><span class="kbd">Space</span> play/pause</span><span><span class="kbd">S</span> step</span><span><span class="kbd">P</span> phase</span><span><span class="kbd">R</span> reset</span><span>Presets &amp; Reset restart from the same initial swarm, so comparisons are fair.</span></div>
+            </div>
+            <div class="below-stage">
+              <div class="panel pad">
+                <div class="panel-title"><span><span class="dot" style="--c:var(--accent)"></span>Live commentary</span></div>
+                <div class="narrator" id="narrator"></div>
+              </div>
+              <div class="panel">
+                <div class="panel-title" style="padding:16px 18px 0;margin:0"><span><span class="dot" style="--c:var(--in)"></span>What the code is doing</span></div>
+                <div class="code" id="pgCode">
+<span class="ln"><span class="kw">for</span> t = <span class="nm">1</span> … T:</span>
+<span class="ln" data-ph="0" style="--c:var(--in)">  vᵢ ← w·vᵢ + c₁r₁(pᵢ−xᵢ) + c₂r₂(g−xᵢ)</span>
+<span class="ln" data-ph="1" style="--c:var(--res)">  xᵢ ← xᵢ + vᵢ</span>
+<span class="ln" data-ph="2" style="--c:var(--accent-2)">  fᵢ ← <span class="fn">f</span>(xᵢ)</span>
+<span class="ln" data-ph="3" style="--c:var(--cog)">  <span class="kw">if</span> fᵢ &lt; f(pᵢ): pᵢ ← xᵢ</span>
+<span class="ln" data-ph="4" style="--c:var(--soc)">  <span class="kw">if</span> f(pᵢ) &lt; f(g): g ← pᵢ</span>
+</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: insights -->
+          <div class="pg-col pg-right">
+            <div class="panel pad">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--res)"></span>Swarm status</span></div>
+              <div class="stats" id="pgStats"></div>
+            </div>
+            <div class="panel pad chart-box">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--soc)"></span>Convergence · error of gbest (log)</span></div>
+              <canvas id="chartConv"></canvas>
+            </div>
+            <div class="panel pad chart-box">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--in)"></span>Diversity · swarm spread</span></div>
+              <canvas id="chartDiv"></canvas>
+            </div>
+            <div class="panel pad inspector">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--cog)"></span>Particle inspector</span></div>
+              <div id="inspector"><p class="empty">Click any particle on the map to see the forces acting on it.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 06 PARAMETERS ============================ -->
+    <section class="section" id="parameters">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">06 · Parameters</span>
+          <h2>Exploration vs. exploitation: <em>the central trade-off</em></h2>
+          <p class="lead">Every optimizer must balance two opposite needs. <b class="c-in">Exploration</b> means searching widely to discover promising regions. <b class="c-soc">Exploitation</b> means focusing on a good region to refine the answer. Too much exploration and the swarm never settles; too much exploitation and it settles too early in the wrong valley — <b>premature convergence</b>.</p>
+          <p class="lead">Below, three swarms race on the same landscape from <em>exactly the same starting positions</em>. Only one setting differs.</p>
+        </div>
+
+        <div class="race-bar reveal">
+          <div class="seg" id="raceSeg">
+            <button data-v="inertia" class="active">Inertia weight w</button>
+            <button data-v="social">Cognitive vs social</button>
+            <button data-v="size">Swarm size</button>
+            <button data-v="topology">Topology</button>
+          </div>
+          <div class="btn-row">
+            <span class="mono c-muted" id="raceIter" style="align-self:center;font-size:.8rem">iteration 0</span>
+            <button class="btn btn-sm" id="raceRestart"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>New race</button>
+          </div>
+        </div>
+        <div class="grid-3 reveal" id="racePanels"></div>
+        <div class="panel race-explain reveal" id="raceExplain"></div>
+
+        <div class="mt-lg reveal"><h3 style="font-size:1.5rem;margin-bottom:18px">Parameter cheat-sheet</h3></div>
+        <div class="param-cards">
+          <div class="panel pcard reveal d1" style="--c:var(--in)"><span class="range">0.4 – 0.9</span><div class="sym">w</div><h4>Inertia weight</h4>
+            <div class="ef"><span>Too high</span><span>Velocities never shrink; the swarm keeps flying around (w &gt; 1 can even explode).</span></div>
+            <div class="ef"><span>Too low</span><span>Particles stop almost instantly and collapse onto the first good spot.</span></div></div>
+          <div class="panel pcard reveal d2" style="--c:var(--cog)"><span class="range">1.5 – 2.0</span><div class="sym">c₁</div><h4>Cognitive coefficient</h4>
+            <div class="ef"><span>Too high</span><span>Particles act like loners, each circling its own memory; little cooperation.</span></div>
+            <div class="ef"><span>Too low</span><span>No personal memory: everyone rushes to the leader, losing diversity.</span></div></div>
+          <div class="panel pcard reveal d3" style="--c:var(--soc)"><span class="range">1.5 – 2.0</span><div class="sym">c₂</div><h4>Social coefficient</h4>
+            <div class="ef"><span>Too high</span><span>Herd behaviour; fast but risky convergence onto a possibly local optimum.</span></div>
+            <div class="ef"><span>Too low</span><span>Discoveries don't spread; it's just N independent random searches.</span></div></div>
+          <div class="panel pcard reveal d1" style="--c:var(--res)"><span class="range">10 – 50 % range</span><div class="sym">v<sub>max</sub></div><h4>Velocity clamp</h4>
+            <div class="ef"><span>Too high</span><span>Particles overshoot and bounce off the walls of the search space.</span></div>
+            <div class="ef"><span>Too low</span><span>Movement is sluggish; distant regions are never reached.</span></div></div>
+          <div class="panel pcard reveal d2" style="--c:var(--accent)"><span class="range">20 – 50</span><div class="sym">N</div><h4>Swarm size</h4>
+            <div class="ef"><span>Too high</span><span>More function evaluations per iteration → slower in wall-clock time.</span></div>
+            <div class="ef"><span>Too low</span><span>Too few scouts; large parts of the landscape are never sampled.</span></div></div>
+          <div class="panel pcard reveal d3" style="--c:var(--accent-2)"><span class="range">U(0, 1)</span><div class="sym">r₁, r₂</div><h4>Random factors</h4>
+            <div class="ef"><span>Role</span><span>Not tuned — drawn fresh each step to add stochastic variation.</span></div>
+            <div class="ef"><span>Effect</span><span>Prevents identical, deterministic paths and keeps the swarm diverse.</span></div></div>
+        </div>
+
+        <div class="split even mt">
+          <div class="panel pad wsched reveal">
+            <div class="panel-title"><span><span class="dot" style="--c:var(--in)"></span>Linearly decreasing inertia (Shi &amp; Eberhart, 1998)</span></div>
+            <canvas id="wSched"></canvas>
+            <p class="note" style="margin-top:10px">w(t) = w<sub>max</sub> − (w<sub>max</sub> − w<sub>min</sub>) · t / T. Explore boldly at the start, then gradually brake and fine-tune. Try "Decay 0.9 → 0.4" in the playground.</p>
+          </div>
+          <div class="reveal" style="display:flex;flex-direction:column;gap:18px">
+            <div class="callout">
+              <div class="big">χ ≈ 0.729</div>
+              <p><b style="color:var(--text)">Constriction factor (Clerc &amp; Kennedy, 2002).</b> A mathematical stability analysis showed that choosing w = 0.7298 and c₁ = c₂ = 1.49618 guarantees the swarm converges without exploding. That's why the playground's default is the "Standard" preset.</p>
+            </div>
+            <div class="panel pad">
+              <div class="panel-title"><span><span class="dot" style="--c:var(--cog)"></span>Rule of thumb</span></div>
+              <p class="c-muted" style="font-size:.92rem">Keep <b>c₁ ≈ c₂</b> so personal and social knowledge are balanced, keep <b>w &lt; 1</b> so velocities shrink over time, and use a <b>ring topology</b> or larger swarm when the landscape has many local minima.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 07 TOPOLOGY ============================ -->
+    <section class="section" id="topology">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">07 · Social Networks</span>
+          <h2>Who listens to whom? <em>Neighbourhood topologies</em></h2>
+          <p class="lead">"gbest" doesn't have to mean the best of the <em>whole</em> swarm. Each particle can instead follow the best of a small <b>neighbourhood</b> (lbest). The shape of this communication network changes how fast good news spreads. Below, one particle (glowing) discovers a better position. Watch how the information travels.</p>
+        </div>
+        <div class="grid-2 reveal">
+          <div class="panel topo-panel">
+            <div class="panel-title"><span><span class="dot" style="--c:var(--soc)"></span>Global / Star topology (gbest)</span></div>
+            <div class="cw"><canvas id="topoGlobal"></canvas></div>
+            <div class="topo-meta"><span>informed <b id="tgInf">0</b>/12</span><span>steps <b id="tgHop">0</b></span></div>
+            <p class="c-muted" style="font-size:.9rem">Everyone is connected to everyone. A discovery reaches the entire swarm in <b>one step</b>.</p>
+            <div class="pc"><div class="pro"><h5>Strength</h5>Fast convergence. Great on smooth, unimodal problems.</div><div class="con"><h5>Weakness</h5>If the leader is in a local minimum, everyone is dragged there.</div></div>
+          </div>
+          <div class="panel topo-panel">
+            <div class="panel-title"><span><span class="dot" style="--c:var(--in)"></span>Ring topology (lbest, k = 2)</span></div>
+            <div class="cw"><canvas id="topoRing"></canvas></div>
+            <div class="topo-meta"><span>informed <b id="trInf">0</b>/12</span><span>steps <b id="trHop">0</b></span></div>
+            <p class="c-muted" style="font-size:.9rem">Each particle only talks to its two neighbours. Good news must travel <b>hop by hop</b> around the ring.</p>
+            <div class="pc"><div class="pro"><h5>Strength</h5>Several regions are explored in parallel → robust on multimodal landscapes.</div><div class="con"><h5>Weakness</h5>Slower convergence; needs more iterations.</div></div>
+          </div>
+        </div>
+        <div class="btn-row mt reveal" style="justify-content:center">
+          <button class="btn btn-primary" id="topoTrigger"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.9H22l-6 4.6 2.3 7L12 16.2 5.7 20.5 8 13.5 2 8.9h7.6z"/></svg>Trigger a new discovery</button>
+        </div>
+        <p class="note reveal" style="text-align:center;margin-top:14px">Other common topologies: Von Neumann (grid, 4 neighbours), random, and "fully-informed" PSO where every neighbour contributes. Switch the playground to "Ring (lbest)" to see the effect on a real search.</p>
+      </div>
+    </section>
+
+    <!-- ============================ 08 SUMMARY ============================ -->
+    <section class="section" id="summary">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">08 · The Big Picture</span>
+          <h2>Where PSO fits <em>and why it matters</em></h2>
+        </div>
+
+        <div class="grid-2 reveal">
+          <div class="panel pad">
+            <h3>Strengths</h3>
+            <ul class="list" style="--c:var(--res)">
+              <li><b>Gradient-free.</b> Needs only f(x) values — works on noisy, discontinuous or black-box functions.</li>
+              <li><b>Simple.</b> Two update equations; a working implementation is ~20 lines.</li>
+              <li><b>Few parameters.</b> Just w, c₁, c₂ (and N) — with well-known safe defaults.</li>
+              <li><b>Memory.</b> Every particle keeps its best find, so good solutions are never lost.</li>
+              <li><b>Parallel.</b> Particles are evaluated independently — easy to distribute.</li>
+            </ul>
+          </div>
+          <div class="panel pad">
+            <h3>Limitations</h3>
+            <ul class="list" style="--c:var(--soc)">
+              <li><b>Premature convergence</b> on highly multimodal problems, especially with gbest topology.</li>
+              <li><b>No guarantee</b> of reaching the global optimum (it's a heuristic).</li>
+              <li><b>Parameter sensitivity:</b> poor w, c₁, c₂ can stall or explode the swarm.</li>
+              <li><b>High dimensions</b> need many particles and iterations.</li>
+              <li><b>Continuous by design;</b> discrete problems need variants such as Binary PSO.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel pad mt reveal">
+          <h3>PSO vs. other optimizers</h3>
+          <div class="table-wrap">
+            <table class="cmp">
+              <thead><tr><th>Property</th><th class="hl">PSO</th><th>Genetic Algorithm</th><th>Gradient Descent</th></tr></thead>
+              <tbody>
+                <tr><td>Inspired by</td><td class="hl">Bird flocking / fish schooling</td><td>Natural evolution</td><td>Calculus (slope)</td></tr>
+                <tr><td>Needs gradient?</td><td class="hl"><span class="yes">No</span></td><td><span class="yes">No</span></td><td><span class="no">Yes</span></td></tr>
+                <tr><td>Population-based?</td><td class="hl"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="no">No (single point)</span></td></tr>
+                <tr><td>Core operators</td><td class="hl">Velocity + position update</td><td>Selection, crossover, mutation</td><td>Step against the gradient</td></tr>
+                <tr><td>Memory of past bests</td><td class="hl"><span class="yes">Yes (pbest, gbest)</span></td><td><span class="mid">Only via elitism</span></td><td><span class="no">No</span></td></tr>
+                <tr><td>Information sharing</td><td class="hl">Broadcast of best position</td><td>Recombination of parents</td><td>—</td></tr>
+                <tr><td>Escapes local minima</td><td class="hl"><span class="yes">Often</span></td><td><span class="yes">Often</span></td><td><span class="no">Rarely</span></td></tr>
+                <tr><td>Typical parameters</td><td class="hl">w, c₁, c₂, N</td><td>Pop. size, p<sub>c</sub>, p<sub>m</sub></td><td>Learning rate</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mt-lg reveal"><h3 style="font-size:1.5rem;margin-bottom:18px">Real-world applications</h3></div>
+        <div class="grid-4">
+          <div class="panel app-card reveal d1" style="--c:var(--in)"><span class="n">01</span><h4>Neural network training</h4><p>Optimising weights and hyper-parameters (learning rate, layer sizes) without back-propagation.</p></div>
+          <div class="panel app-card reveal d2" style="--c:var(--cog)"><span class="n">02</span><h4>Fuzzy system tuning</h4><p>Choosing membership-function shapes and rule weights in fuzzy controllers — a classic soft-computing hybrid.</p></div>
+          <div class="panel app-card reveal d3" style="--c:var(--soc)"><span class="n">03</span><h4>Power systems</h4><p>Economic load dispatch, optimal power flow and PID controller tuning in electrical grids.</p></div>
+          <div class="panel app-card reveal d4" style="--c:var(--res)"><span class="n">04</span><h4>Feature selection</h4><p>Binary PSO picks the subset of features that maximises classifier accuracy.</p></div>
+          <div class="panel app-card reveal d1" style="--c:var(--accent)"><span class="n">05</span><h4>Robotics &amp; UAVs</h4><p>Path planning and coordinating real robot or drone swarms.</p></div>
+          <div class="panel app-card reveal d2" style="--c:var(--accent-2)"><span class="n">06</span><h4>Antenna &amp; circuit design</h4><p>Shaping antenna arrays and sizing analog circuit components.</p></div>
+          <div class="panel app-card reveal d3" style="--c:#a78bfa"><span class="n">07</span><h4>Image processing</h4><p>Multilevel thresholding, clustering and segmentation of images.</p></div>
+          <div class="panel app-card reveal d4" style="--c:#f97316"><span class="n">08</span><h4>Scheduling &amp; logistics</h4><p>Job-shop scheduling and vehicle routing (with discrete PSO variants).</p></div>
+        </div>
+
+        <div class="mt-lg reveal"><h3 style="font-size:1.5rem;margin-bottom:18px">Key takeaways</h3></div>
+        <div class="takeaways reveal">
+          <div><b>PSO is a population-based, gradient-free optimizer</b> inspired by the social behaviour of bird flocks.</div>
+          <div>Each particle has a <b>position</b> (a candidate solution), a <b>velocity</b>, and a memory of its <b>personal best</b>.</div>
+          <div>New velocity = <b class="c-in">inertia</b> + <b class="c-cog">pull toward pbest</b> + <b class="c-soc">pull toward gbest</b>, each scaled by a coefficient and a random number.</div>
+          <div><b>w</b> controls exploration vs. exploitation; <b>c₁</b>/<b>c₂</b> balance individual vs. social learning.</div>
+          <div>The <b>topology</b> (global vs. ring) controls how fast information spreads — speed vs. robustness.</div>
+          <div>It's a <b>heuristic</b>: very effective in practice, but with no guarantee of finding the global optimum.</div>
+        </div>
+
+        <div class="panel pad mt reveal">
+          <h3>References</h3>
+          <ol class="refs">
+            <li>Kennedy, J. &amp; Eberhart, R. (1995). <i>Particle swarm optimization.</i> Proc. IEEE International Conference on Neural Networks, vol. 4, pp. 1942–1948.</li>
+            <li>Shi, Y. &amp; Eberhart, R. (1998). <i>A modified particle swarm optimizer.</i> Proc. IEEE International Conference on Evolutionary Computation, pp. 69–73.</li>
+            <li>Clerc, M. &amp; Kennedy, J. (2002). <i>The particle swarm — explosion, stability, and convergence in a multidimensional complex space.</i> IEEE Transactions on Evolutionary Computation, 6(1), 58–73.</li>
+            <li>Poli, R., Kennedy, J. &amp; Blackwell, T. (2007). <i>Particle swarm optimization: an overview.</i> Swarm Intelligence, 1(1), 33–57.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 09 QUIZ ============================ -->
+    <section class="section" id="quiz">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">09 · Test Yourself</span>
+          <h2>Did it click? <em>Ten quick questions</em></h2>
+          <p class="lead">Each answer comes with an explanation. If you get one wrong, scroll back to the matching visual and play with it.</p>
+        </div>
+        <div class="reveal" id="quizRoot"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <span>Particle Swarm Optimization — Interactive Visual Guide · Soft Computing</span>
+      <span>Built with vanilla HTML, CSS &amp; JavaScript (Canvas 2D) · no libraries</span>
+    </div>
+  </footer>
+
+  <script src="js/utils.js"></script>
+  <script src="js/functions.js"></script>
+  <script src="js/pso.js"></script>
+  <script src="js/hero.js"></script>
+  <script src="js/problem.js"></script>
+  <script src="js/analogy.js"></script>
+  <script src="js/vector.js"></script>
+  <script src="js/flow.js"></script>
+  <script src="js/surface3d.js"></script>
+  <script src="js/playground.js"></script>
+  <script src="js/compare.js"></script>
+  <script src="js/topology.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
