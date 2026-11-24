@@ -12,7 +12,7 @@
 | **Submitted By** | **Arushi Waddepalli** (`LIT2024009`)<br>**Sanjana Chennupati** (`LIT2024016`) |
 | **Tech Stack** | Vanilla **HTML5, CSS3, JavaScript (Canvas 2D, 3D Mesh Projection, SVG)**<br>*Zero external libraries, frameworks, or build tools* |
 | **Deliverables** | 1. Interactive Web Application (`index.html`)<br>2. Demonstration Video<br>3. Technical Documentation (`README.md`) |
-| **Video Link** | *[Insert 3-Minute Demo Video Link Here]* |
+| **Video Link** | https://drive.google.com/file/d/1Li7bm8TtI8u7h9LOAVXe4T_3JRUlAxI4/view?usp=sharing |
 
 ---
 
